@@ -1,3 +1,8 @@
 module alim/geochat/server
 
-go 1.21.3
+go 1.21
+
+require (
+	github.com/jmoiron/sqlx v1.3.5
+	github.com/lib/pq v1.10.9
+)
