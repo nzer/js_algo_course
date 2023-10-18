@@ -2,40 +2,60 @@ package main
 
 import (
 	"container/list"
+	"log"
 	"math"
+	"sync"
 )
 
 type MessageSubscriber struct {
 	lat      float64
 	long     float64
-	messages chan string
+	messages chan *Message
 }
 
 type MessageBus struct {
 	subscribers *list.List
+	mu          sync.RWMutex
 }
 
-func (m *MessageBus) sendMessage(text string, lat float64, long float64) {
+type Message struct {
+	AuthorName string
+	Text       string
+	lat        float64
+	long       float64
+}
+
+func (m *MessageBus) sendMessage(message *Message) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	el := m.subscribers.Front()
 	for el != nil {
 		subscriber := el.Value.(*MessageSubscriber)
-		dist := haversine(subscriber.lat, subscriber.long, lat, long)
+		dist := haversine(subscriber.lat, subscriber.long, message.lat, message.long)
 		if dist < 1 {
-			subscriber.messages <- text
+			subscriber.messages <- message
 		}
 		el = el.Next()
 	}
 }
 
 func (m *MessageBus) subscribe(subscriber *MessageSubscriber) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.subscribers.PushBack(subscriber)
+	log.Println("added subscriber: ")
+	log.Println(subscriber)
 }
 
 func (m *MessageBus) unsubscribe(subscriber *MessageSubscriber) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	el := m.subscribers.Front()
 	for el != nil {
 		if el.Value == subscriber {
 			m.subscribers.Remove(el)
+			log.Println("removed subscriber: ")
+			log.Println(subscriber)
 			return
 		}
 		el = el.Next()
