@@ -20,7 +20,7 @@ func main() {
 	mux.HandleFunc("/", c.index)
 	mux.HandleFunc("/message", c.newMessage)
 
-	err := http.ListenAndServe(":3001", mux)
+	err := http.ListenAndServe(":5000", mux)
 	log.Fatal(err)
 }
 
@@ -44,7 +44,9 @@ func (c *ChatRoutes) index(w http.ResponseWriter, r *http.Request) {
 	c.bus.subscribe(&subscriber)
 	defer c.bus.unsubscribe(&subscriber)
 
+	addHeaders(w)
 	w.Header().Add("Content-Type", "text/event-stream")
+	w.Header().Add("X-Accel-Buffering", "no")
 	w.WriteHeader(200)
 
 	for {
@@ -66,6 +68,7 @@ func (c *ChatRoutes) index(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *ChatRoutes) newMessage(w http.ResponseWriter, r *http.Request) {
+	addHeaders(w)
 	query := r.URL.Query()
 	msg := query.Get("message")
 	lat, err := strconv.ParseFloat(query.Get("lat"), 64)
@@ -77,4 +80,11 @@ func (c *ChatRoutes) newMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	go c.bus.sendMessage(&Message{AuthorName: query.Get("name"), Text: msg, lat: lat, long: long})
+}
+
+func addHeaders(w http.ResponseWriter) {
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+	w.Header().Add("Access-Control-Allow-Credentials", "true")
+	w.Header().Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	w.Header().Add("Access-Control-Allow-Headers", "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type")
 }
