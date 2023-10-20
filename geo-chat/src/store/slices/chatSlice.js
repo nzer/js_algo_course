@@ -7,7 +7,7 @@ import {
 import { getAllMessagesApi, setUserMessage } from "../../__mocks__/api";
 
 const initialState = {
-  userName: null,
+  userName: "",
   messagesLoader: false,
   messages: [],
   messageLoader: false,
@@ -19,8 +19,8 @@ export const getAllMessages = createAsyncThunk(
   async (_, thunkApi) => {
     thunkApi.dispatch(setLoaderOn());
     try {
-      const result = await getAllMessagesApi();
-      return result;
+      //const result = await getAllMessagesApi();
+      //return result;
     } catch (e) {
       console.error(e);
     } finally {
@@ -66,15 +66,24 @@ const chatSlice = createSlice({
     setCoordinates: (state, action) => {
       state.coordinates = action.payload;
     },
+    addMessage: (state, action) => {
+      state.messages.push(
+        {
+          userName: action.payload.AuthorName,
+          message: action.payload.Text,
+          time: new Date().toLocaleDateString(),
+        }
+      )
+    },
   },
-  extraReducers: (builder) => {
-    builder.addCase(getAllMessages.fulfilled, (state, action) => {
-      state.messages = action.payload;
-    });
-    builder.addCase(setMessage.fulfilled, (state, action) => {
-      state.messages = [...state.messages, action.payload];
-    });
-  },
+  // extraReducers: (builder) => {
+  //   builder.addCase(getAllMessages.fulfilled, (state, action) => {
+  //     state.messages = action.payload;
+  //   });
+  //   builder.addCase(setMessage.fulfilled, (state, action) => {
+  //     state.messages = [...state.messages, action.payload];
+  //   });
+  // },
 });
 
 export const {
@@ -84,6 +93,7 @@ export const {
   setMessageLoaderOn,
   setMessageLoaderOff,
   setCoordinates,
+  addMessage,
 } = chatSlice.actions;
 export default chatSlice.reducer;
 
