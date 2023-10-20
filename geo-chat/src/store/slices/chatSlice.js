@@ -11,6 +11,7 @@ const initialState = {
   messagesLoader: false,
   messages: [],
   messageLoader: false,
+  coordinates: {lat: 0, long: 0}
 };
 
 export const getAllMessages = createAsyncThunk(
@@ -62,6 +63,9 @@ const chatSlice = createSlice({
     setMessageLoaderOff: (state) => {
       state.messageLoader = false;
     },
+    setCoordinates: (state, action) => {
+      state.coordinates = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(getAllMessages.fulfilled, (state, action) => {
@@ -79,6 +83,7 @@ export const {
   setLoaderOff,
   setMessageLoaderOn,
   setMessageLoaderOff,
+  setCoordinates,
 } = chatSlice.actions;
 export default chatSlice.reducer;
 
@@ -99,4 +104,8 @@ export const messagesSelector = createSelector(
 export const messageSelector = createSelector(
   selectSelf,
   (state) => state.messageLoader
+);
+export const coordinatesSelector = createSelector(
+  selectSelf,
+  (state) => state.coordinates
 );

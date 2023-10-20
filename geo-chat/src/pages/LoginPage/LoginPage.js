@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
 import Avatar from "@mui/material/Avatar";
@@ -9,46 +9,58 @@ import TextField from "@mui/material/TextField";
 import Paper from "@mui/material/Paper";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
+import { CircularProgress } from "@mui/material";
 
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import Typography from "@mui/material/Typography";
 
-import { setUserName } from "../../store/slices/chatSlice";
+import { setUserName, setCoordinates, setLoaderOn, setLoaderOff, messagesLoaderSelector, userNameSelector, coordinatesSelector } from "../../store/slices/chatSlice";
 
 export const LoginPage = () => {
-  const [name, setName] = useState("");
-
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const messagesLoader = useSelector(messagesLoaderSelector);
+  const userName = useSelector(userNameSelector);
+  const coordinates = useSelector(coordinatesSelector);
+
+  const [name, setName] = useState(userName);
+  const [lat, setLat] = useState(coordinates.lat);
+  const [long, setLong] = useState(coordinates.long);
 
   const handleSubmit = useCallback(
     (event) => {
       event.preventDefault();
       dispatch(setUserName(name));
+      dispatch(setCoordinates({lat: parseFloat(lat), long: parseFloat(long)}));
       navigate("/chat");
     },
-    [dispatch, name, navigate]
+    [dispatch, name, lat, long, navigate]
   );
 
+  const getGeoAuto = () => {
+    dispatch(setLoaderOn());
+    navigator.geolocation.getCurrentPosition((pos) => {
+      setLat(pos.coords.latitude.toFixed(5))
+      setLong(pos.coords.longitude.toFixed(5))
+      dispatch(setLoaderOff());
+    }, () => dispatch(setLoaderOff()) ); 
+  };
+
+
+  if (messagesLoader){
+    return <CircularProgress />
+  }
+
   return (
-    <Grid container component="main" sx={{ height: "100vh" }}>
+    <Grid container component="main" sx={{
+      height: "100vh",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      alignContent: "center",
+      justifyContent: "center"
+    }}>
       <CssBaseline />
-      <Grid
-        item
-        xs={false}
-        sm={4}
-        md={7}
-        sx={{
-          backgroundImage: "url(https://source.unsplash.com/random?wallpapers)",
-          backgroundRepeat: "no-repeat",
-          backgroundColor: (t) =>
-            t.palette.mode === "light"
-              ? t.palette.grey[50]
-              : t.palette.grey[900],
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      />
       <Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
         <Box
           sx={{
@@ -57,6 +69,7 @@ export const LoginPage = () => {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
+            alignContent: "center",
           }}
         >
           <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
@@ -80,6 +93,41 @@ export const LoginPage = () => {
               label="Your name"
               autoFocus
             />
+
+
+            <Grid container spacing={2} alignItems={"center"}>
+            <Grid item xs={5}>
+            <TextField
+              value={lat}
+              onChange={(e) => setLat(e.target.value)}
+              margin="normal"
+              required
+              fullWidth
+              label="Latitude"
+              autoFocus
+            />
+            </Grid><Grid item xs={5}>
+            <TextField
+              value={long}
+              onChange={(e) => setLong(e.target.value)}
+              margin="normal"
+              required
+              fullWidth
+              label="Longitude"
+              autoFocus
+            />
+            </Grid>
+            <Grid item xs={2}>
+            <Button variant="text" onClick={getGeoAuto}>Auto</Button>
+            </Grid>
+
+            </Grid>
+
+            
+
+            
+            
+            
             <Button
               disabled={!name.trim()}
               type="submit"
